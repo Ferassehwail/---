@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>شهداء مدينة بيت حانون</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700&display=swap');
+        body { font-family: 'Tajawal', sans-serif; background: #f1f5f9; }
+        .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .hero-gradient { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+    <div id="welcomePopup" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/20 backdrop-blur-xl p-4">
+        <div class="glass-card p-12 rounded-[50px] max-w-lg text-center border-t border-white shadow-2xl">
+            <h2 class="text-3xl font-bold mb-6 text-slate-800">بسم الله الرحمن الرحيم</h2>
+            <p class="mb-6 text-lg text-slate-600 leading-relaxed">هذا الموقع صدقة جارية وتوثيقٌ لذكرى شهداء مدينة بيت حانون، لتبقى أسماؤهم وسيرتهم حاضرة في الذاكرة جيلاً بعد جيل. 🕊️</p>
+            <p class="mb-8 text-sm text-[#D4AF37] font-bold">تصميم وتنفيذ م. فراس محمد سحويل</p>
+            <button onclick="closePopup()" class="px-12 py-4 bg-slate-800 text-white rounded-full hover:bg-black transition-all">دخول الموقع</button>
+        </div>
+    </div>
+
+    <div id="bioModal" class="hidden fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="glass-card p-8 rounded-[40px] max-w-lg w-full shadow-2xl relative border border-white">
+            <button onclick="closeBio()" class="absolute top-4 left-4 text-3xl font-bold text-slate-500 hover:text-red-500">&times;</button>
+            <h2 id="modalTitle" class="text-2xl font-bold mb-4 text-slate-800 border-b pb-2"></h2>
+            <p id="modalBio" class="text-slate-600 leading-relaxed max-h-60 overflow-y-auto"></p>
+        </div>
+    </div>
+
+    <header class="hero-gradient text-white py-16 px-4 text-center">
+        <h1 class="text-5xl font-bold mb-4">شهداء بيت حانون</h1>
+        <div class="flex justify-center gap-8 mt-8">
+            <div class="bg-white/10 p-4 rounded-2xl w-32">
+                <p class="text-sm opacity-80">العدد الكلي</p>
+                <p id="totalCount" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-white/10 p-4 rounded-2xl w-40">
+                <p class="text-sm opacity-80">آخر المنضمين</p>
+                <p id="latestName" class="text-lg font-bold truncate">...</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-xl mx-auto -mt-8 px-4">
+        <input type="text" id="searchInput" placeholder="🔍 ابحث باسم الشهيد..." class="w-full p-5 rounded-2xl shadow-xl border-none outline-none focus:ring-4 focus:ring-[#D4AF37]/30 text-center text-lg">
+    </div>
+
+    <main class="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8" id="martyrsContainer"></main>
+
+    <footer class="mt-24 mb-10 text-center">
+        <div class="inline-block glass-card px-10 py-5 rounded-full shadow-md">
+            <p class="text-slate-500 font-medium">فكرة وتصميم <span class="text-[#D4AF37] font-bold">م. فراس محمد سحويل</span></p>
+        </div>
+    </footer>
+
+    <script>
+        // رابط الـ Google Apps Script الخاص بك
+        const API_URL = "https://script.google.com/macros/s/AKfycbyfJ5zKcZX7ltSiPDNpvimE3Wdosjy8frcaON4Hqrc_NWxOnEcPdFfMdlN4fFAc2iQ/exec";
+        let allMartyrs = [];
+
+        async function loadData() {
+            try {
+                const res = await fetch(API_URL);
+                const data = await res.json();
+                allMartyrs = data; // نفترض أن البيانات مصفوفة من الكائنات
+                
+                document.getElementById('totalCount').innerText = allMartyrs.length;
+                document.getElementById('latestName').innerText = allMartyrs[allMartyrs.length - 1].name;
+                render(allMartyrs);
+            } catch (err) { 
+                console.error("خطأ في تحميل البيانات:", err); 
+            }
+        }
+
+        function render(data) {
+            const container = document.getElementById('martyrsContainer');
+            container.innerHTML = data.map(m => `
+                <div class="glass-card p-5 rounded-[30px] hover:scale-[1.02] transition-all shadow-lg">
+                    <img src="${m.image}" loading="lazy" alt="${m.name}" class="w-full h-72 object-cover rounded-2xl mb-4 bg-slate-200">
+                    <h3 class="text-xl font-bold">${m.name}</h3>
+                    <p class="text-[#D4AF37] mb-4">${m.family}</p>
+                    <button onclick="showBio('${m.name}', \`${m.bio}\`)" class="w-full py-3 bg-slate-800 text-white rounded-xl hover:bg-slate-900 transition-colors">عرض السيرة</button>
+                </div>
+            `).join('');
+        }
+
+        function showBio(name, bio) {
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('modalBio').innerText = bio;
+            document.getElementById('bioModal').classList.remove('hidden');
+        }
+
+        function closeBio() {
+            document.getElementById('bioModal').classList.add('hidden');
+        }
+
+        function closePopup() {
+            document.getElementById('welcomePopup').style.display = 'none';
+            localStorage.setItem('visited', 'true');
+        }
+
+        if (localStorage.getItem('visited')) document.getElementById('welcomePopup').style.display = 'none';
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const filtered = allMartyrs.filter(m => m.name.includes(e.target.value));
+            render(filtered);
+        });
+
+        loadData();
+    </script>
+</body>
+</html>
